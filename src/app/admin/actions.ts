@@ -2,8 +2,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-async function requireStaff() {
-  const s = createClient()
+// Devuelve el cliente como `any` a propósito: las acciones usan FormData y no
+// necesitan el tipado profundo de Supabase (que ralentiza mucho el type-check).
+async function requireStaff(): Promise<any> {
+  const s: any = createClient()
   const { data: { user } } = await s.auth.getUser()
   if (!user) throw new Error('No autenticado')
   const { data: p } = await s.from('profiles').select('role').eq('id', user.id).single()
@@ -54,8 +56,14 @@ export async function createClub(fd: FormData): Promise<R> {
 }
 export async function deleteClub(id: string): Promise<R> {
   const s = await requireStaff()
+  // Desvincula el club de todo lo que lo referencia (no borra equipos/jugadores, solo los desliga)
+  await s.from('teams').update({ club_id: null }).eq('club_id', id)
+  await s.from('players').update({ home_club_id: null }).eq('home_club_id', id)
+  await s.from('inscriptions').update({ club_id: null }).eq('club_id', id)
+  await s.from('matches').update({ venue_club_id: null }).eq('venue_club_id', id)
+  await s.from('profiles').update({ club_id: null }).eq('club_id', id)
   const { error } = await s.from('clubs').delete().eq('id', id)
-  if (error) return err('No se pudo borrar (¿tiene equipos/jugadores?). ' + error.message)
+  if (error) return err(error.message)
   revalidateAll(); return ok('Club eliminado')
 }
 
@@ -76,8 +84,14 @@ export async function createPlayer(fd: FormData): Promise<R> {
 }
 export async function deletePlayer(id: string): Promise<R> {
   const s = await requireStaff()
+  // Desvincula referencias que no borran en cascada (capitanías y parejas de partidos)
+  await s.from('teams').update({ captain_player_id: null }).eq('captain_player_id', id)
+  await s.from('match_rubbers').update({ home_p1: null }).eq('home_p1', id)
+  await s.from('match_rubbers').update({ home_p2: null }).eq('home_p2', id)
+  await s.from('match_rubbers').update({ away_p1: null }).eq('away_p1', id)
+  await s.from('match_rubbers').update({ away_p2: null }).eq('away_p2', id)
   const { error } = await s.from('players').delete().eq('id', id)
-  if (error) return err('No se pudo borrar (¿está en un equipo/partido?). ' + error.message)
+  if (error) return err(error.message)
   revalidateAll(); return ok('Jugador eliminado')
 }
 export async function setPlayerPhoto(playerId: string, url: string): Promise<R> {
@@ -103,8 +117,11 @@ export async function createTeam(fd: FormData): Promise<R> {
 }
 export async function deleteTeam(id: string): Promise<R> {
   const s = await requireStaff()
+  // Borra primero lo que depende del equipo (partidos e inscripciones), para evitar errores de FK
+  await s.from('matches').delete().or(`home_team_id.eq.${id},away_team_id.eq.${id}`)
+  await s.from('inscriptions').delete().eq('team_id', id)
   const { error } = await s.from('teams').delete().eq('id', id)
-  if (error) return err(error.message); revalidateAll(); return ok('Equipo eliminado')
+  if (error) return err(error.message); revalidateAll(); return ok('Equipo eliminado (con sus partidos)')
 }
 export async function addTeamPlayer(teamId: string, playerId: string): Promise<R> {
   const s = await requireStaff()
