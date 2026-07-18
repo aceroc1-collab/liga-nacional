@@ -1,16 +1,15 @@
 // ============================================================
 //  MARCA / IDENTIDAD — cambia estos valores y se actualiza toda la app.
-//  Cuando decidas la marca paraguas (Ruta A o B del dossier), edita SOLO
-//  este archivo.
 // ============================================================
 export const BRAND = {
-  name: 'Liga Nacional',
-  fullName: 'Liga Nacional de Pádel & Tenis Playa',
+  name: 'ArenaPadel Tour',
+  fullName: 'ArenaPadel Tour VZLA',
   tagline: 'Un circuito, dos deportes · Venezuela',
-  shortName: 'LNPP',
+  shortName: 'APT',
   country: 'Venezuela',
-  year: 2026,
-  // Colores (también en tailwind.config.ts)
+  year: 2027,
+  logo: '/logo.png',            // logo de la marca (en /public/logo.png)
+  // Colores (también en tailwind.config.ts) — afinados al logo ArenaPadel
   colors: { padel: '#2A9D8F', playa: '#E9C46A', noche: '#0B1F3A', brasa: '#E76F51' },
   social: { instagram: '', whatsapp: '' },
 }

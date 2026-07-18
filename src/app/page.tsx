@@ -16,8 +16,11 @@ export default async function Home() {
       <section className="relative overflow-hidden bg-noche text-white">
         <div className="absolute inset-0 opacity-20"
              style={{ background: `radial-gradient(60% 60% at 20% 10%, ${BRAND.colors.padel} 0%, transparent 60%), radial-gradient(60% 60% at 90% 30%, ${BRAND.colors.playa} 0%, transparent 55%)` }} />
-        <div className="container-app relative py-20">
-          <p className="badge bg-white/10 text-white/80">Proyecto Nacional · {BRAND.country}</p>
+        <div className="container-app relative py-14">
+          <div className="mx-auto mb-8 max-w-3xl overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
+            <img src={BRAND.logo} alt={BRAND.fullName} className="w-full" />
+          </div>
+          <p className="badge bg-white/10 text-white/80">Proyecto Nacional · {BRAND.country} · {BRAND.year}</p>
           <h1 className="mt-4 max-w-3xl text-4xl font-black leading-tight sm:text-6xl">
             Un circuito, <span className="text-arena">dos deportes.</span>
           </h1>

@@ -14,13 +14,12 @@ export default function Nav() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
       <nav className="container-app flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-noche text-sm font-black text-white">
-            {BRAND.shortName.slice(0,2)}
-          </span>
-          <span className="hidden font-black leading-tight text-noche sm:block">
+        <Link href="/" className="flex items-center gap-2.5">
+          <img src={BRAND.logo} alt={BRAND.fullName}
+            className="h-11 w-11 rounded-xl object-cover ring-1 ring-slate-200" />
+          <span className="font-black leading-tight text-noche">
             {BRAND.name}
-            <span className="block text-[10px] font-medium tracking-wide text-slate-400">{BRAND.tagline}</span>
+            <span className="block text-[10px] font-semibold uppercase tracking-widest text-brasa">VZLA</span>
           </span>
         </Link>
         <div className="flex items-center gap-1">

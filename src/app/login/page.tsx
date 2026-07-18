@@ -27,7 +27,7 @@ export default function LoginPage() {
     <div className="container-app grid min-h-[70vh] place-items-center py-10">
       <div className="card w-full max-w-sm p-8">
         <div className="mb-6 text-center">
-          <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-noche font-black text-white">{BRAND.shortName.slice(0,2)}</div>
+          <img src={BRAND.logo} alt={BRAND.fullName} className="mx-auto h-20 w-20 rounded-2xl object-cover ring-1 ring-slate-200" />
           <h1 className="mt-3 text-xl font-black text-noche">{mode === 'login' ? 'Entrar' : 'Crear cuenta'}</h1>
           <p className="text-sm text-slate-500">{BRAND.name}</p>
         </div>
