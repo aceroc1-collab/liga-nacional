@@ -112,8 +112,9 @@ export default function ReglamentoPage() {
               En fase de grupos: <b>2 puntos</b> por encuentro ganado y 0 por perdido. Cada jugador suma en su ranking por partido ganado.
             </Rule>
             <Rule title="Cancha y material">
-              Cancha de arena de <b>16 x 8 m</b>, red a <b>1,70 m</b>, <b>pelota naranja Stage 2</b> (baja compresión) y
-              palas de tenis playa homologadas.
+              Cancha de arena de <b>16 x 8 m</b>. Altura de la red: <b>1,70 m para todas las categorías</b> y
+              <b> 1,80 m para la categoría Profesional / Élite (Serie A)</b>. <b>Pelota naranja Stage 2</b> (baja compresión)
+              y palas de tenis playa homologadas.
             </Rule>
           </Card>
           <Card>
