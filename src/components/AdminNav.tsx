@@ -7,6 +7,7 @@ const links = [
   { href: '/admin/equipos', label: 'Equipos' },
   { href: '/admin/partidos', label: 'Partidos' },
   { href: '/admin/patrocinios', label: 'Patrocinios' },
+  { href: '/admin/usuarios', label: 'Administradores' },
 ]
 
 export default function AdminNav({ active }: { active: string }) {

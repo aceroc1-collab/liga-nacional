@@ -82,3 +82,60 @@ export async function getAdminMatches() {
     .select('id, sport, phase, round_label, home_rubbers, away_rubbers, status, home:home_team_id(name), away:away_team_id(name)')
     .order('created_at', { ascending: false }).limit(100))
 }
+
+export type Dashboard = {
+  totals: { players: number; duals: number; clubs: number; teams: number; matches: number; padelPlayers: number; playaPlayers: number }
+  byRegion: { name: string; players: number; teams: number }[]
+  topDual: { name: string; score: number }[]
+  topPadel: { name: string; points: number }[]
+  topPlaya: { name: string; points: number }[]
+  clubs: { name: string; players: number; teams: number; points: number }[]
+}
+
+export async function getDashboard(): Promise<Dashboard> {
+  const s = await db()
+  const empty: Dashboard = { totals:{players:0,duals:0,clubs:0,teams:0,matches:0,padelPlayers:0,playaPlayers:0}, byRegion:[], topDual:[], topPadel:[], topPlaya:[], clubs:[] }
+  try {
+    const [players, clubs, teams, regions, standings, dual, padel, playa, matchesFin] = await Promise.all([
+      safe<any[]>(s.from('players').select('id, region_id, home_club_id, plays_padel, plays_playa, is_dual')),
+      safe<any[]>(s.from('clubs').select('id, name, region_id')),
+      safe<any[]>(s.from('teams').select('id, club_id, region_id')),
+      safe<any[]>(s.from('regions').select('id, name, sort_order').order('sort_order')),
+      safe<any[]>(s.from('v_team_standings').select('team_id, points')),
+      safe<any[]>(s.from('v_dual_ranking').select('full_name, dual_score').order('position').limit(10)),
+      safe<any[]>(s.from('v_player_ranking').select('full_name, points, sport').eq('sport','padel').order('position').limit(10)),
+      safe<any[]>(s.from('v_player_ranking').select('full_name, points, sport').eq('sport','playa').order('position').limit(10)),
+      safe<any[]>(s.from('matches').select('id').eq('status','finalizado')),
+    ])
+    const teamPoints = new Map<string, number>()
+    standings.forEach((r:any)=> teamPoints.set(r.team_id, Number(r.points)||0))
+    const byRegion = regions.map((rg:any)=>({
+      name: rg.name,
+      players: players.filter((p:any)=>p.region_id===rg.id).length,
+      teams: teams.filter((t:any)=>t.region_id===rg.id).length,
+    }))
+    const clubStats = clubs.map((c:any)=>{
+      const clubTeams = teams.filter((t:any)=>t.club_id===c.id)
+      return {
+        name: c.name,
+        players: players.filter((p:any)=>p.home_club_id===c.id).length,
+        teams: clubTeams.length,
+        points: clubTeams.reduce((a:number,t:any)=>a+(teamPoints.get(t.id)||0),0),
+      }
+    }).sort((a,b)=> b.points-a.points || b.players-a.players)
+    return {
+      totals: {
+        players: players.length,
+        duals: players.filter((p:any)=>p.is_dual).length,
+        clubs: clubs.length, teams: teams.length, matches: matchesFin.length,
+        padelPlayers: players.filter((p:any)=>p.plays_padel).length,
+        playaPlayers: players.filter((p:any)=>p.plays_playa).length,
+      },
+      byRegion,
+      topDual: dual.map((d:any)=>({ name:d.full_name, score:Number(d.dual_score)||0 })),
+      topPadel: padel.map((d:any)=>({ name:d.full_name, points:Number(d.points)||0 })),
+      topPlaya: playa.map((d:any)=>({ name:d.full_name, points:Number(d.points)||0 })),
+      clubs: clubStats,
+    }
+  } catch { return empty }
+}

@@ -180,3 +180,56 @@ export async function deleteMatch(id: string): Promise<R> {
   const { error } = await s.from('matches').delete().eq('id', id)
   if (error) return err(error.message); revalidateAll(); return ok('Partido eliminado')
 }
+
+// ---------- EDICIÓN (UPDATE) ----------
+export async function updateClub(id: string, fd: FormData): Promise<R> {
+  const s = await requireStaff()
+  const { error } = await s.from('clubs').update({
+    name: fd.get('name'), region_id: fd.get('region_id') || null, city: fd.get('city') || null,
+    has_padel: fd.get('has_padel') === 'on', has_playa: fd.get('has_playa') === 'on',
+    padel_courts: Number(fd.get('padel_courts') || 0), playa_courts: Number(fd.get('playa_courts') || 0),
+    contact_name: fd.get('contact_name') || null, contact_phone: fd.get('contact_phone') || null,
+    instagram: fd.get('instagram') || null, is_verified: fd.get('is_verified') === 'on',
+  }).eq('id', id)
+  if (error) return err(error.message); revalidateAll(); return ok('Club actualizado')
+}
+export async function updatePlayer(id: string, fd: FormData): Promise<R> {
+  const s = await requireStaff()
+  const { error } = await s.from('players').update({
+    full_name: fd.get('full_name'), gender: fd.get('gender') || 'M',
+    region_id: fd.get('region_id') || null, home_club_id: fd.get('home_club_id') || null,
+    cedula: fd.get('cedula') || null, city: fd.get('city') || null, phone: fd.get('phone') || null,
+    instagram: fd.get('instagram') || null, photo_url: fd.get('photo_url') || null,
+    plays_padel: fd.get('plays_padel') === 'on', plays_playa: fd.get('plays_playa') === 'on',
+  }).eq('id', id)
+  if (error) return err(error.message); revalidateAll(); return ok('Jugador actualizado')
+}
+export async function updateTeam(id: string, fd: FormData): Promise<R> {
+  const s = await requireStaff()
+  const { error } = await s.from('teams').update({
+    name: fd.get('name'), category_id: fd.get('category_id'), region_id: fd.get('region_id'),
+    club_id: fd.get('club_id') || null, colors: fd.get('colors') || null,
+  }).eq('id', id)
+  if (error) return err(error.message); revalidateAll(); return ok('Equipo actualizado')
+}
+export async function updateSponsor(id: string, fd: FormData): Promise<R> {
+  const s = await requireStaff()
+  const { error } = await s.from('sponsors').update({
+    name: fd.get('name'), tier: fd.get('tier') || 'categoria',
+    sport_scope: fd.get('sport_scope') || null, website: fd.get('website') || null,
+    description: fd.get('description') || null, logo_url: fd.get('logo_url') || null,
+    sort_order: Number(fd.get('sort_order') || 0),
+  }).eq('id', id)
+  if (error) return err(error.message); revalidateAll(); return ok('Patrocinador actualizado')
+}
+
+// ---------- GESTIÓN DE ADMINISTRADORES (ROLES) ----------
+export async function setUserRole(userId: string, role: string): Promise<R> {
+  const s = await requireStaff()
+  // Solo un admin puede crear otros admin/coordinadores
+  const { data: { user } } = await s.auth.getUser()
+  const { data: me } = await s.from('profiles').select('role').eq('id', user.id).single()
+  if (me?.role !== 'admin') return err('Solo un administrador principal puede cambiar roles')
+  const { error } = await s.from('profiles').update({ role }).eq('id', userId)
+  if (error) return err(error.message); revalidateAll(); return ok('Rol actualizado a ' + role)
+}
