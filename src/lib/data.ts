@@ -67,3 +67,18 @@ export async function getMatches(sport?: Sport) {
   if (sport) q = q.eq('sport', sport)
   try { const { data } = await q; return (data ?? []) as any[] } catch { return [] as any[] }
 }
+
+export async function getTeams() {
+  const s = await db()
+  return safe<any[]>(s.from('teams').select('*, club:club_id(name), category:category_id(name, gender)').order('name'))
+}
+export async function getActiveSeasonId(): Promise<string | null> {
+  try { const s = await db(); const { data } = await s.from('seasons').select('id').eq('is_active', true).single(); return data?.id ?? null }
+  catch { return null }
+}
+export async function getAdminMatches() {
+  const s = await db()
+  return safe<any[]>(s.from('matches')
+    .select('id, sport, phase, round_label, home_rubbers, away_rubbers, status, home:home_team_id(name), away:away_team_id(name)')
+    .order('created_at', { ascending: false }).limit(100))
+}
