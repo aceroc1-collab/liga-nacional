@@ -8,6 +8,7 @@ const links = [
   { href: '/rankings', label: 'Rankings' },
   { href: '/clubes', label: 'Clubes' },
   { href: '/resultados', label: 'Resultados' },
+  { href: '/reglamento', label: 'Reglamento' },
   { href: '/patrocinios', label: 'Patrocinios' },
   { href: '/inscripciones', label: 'Inscripciones' },
 ]
