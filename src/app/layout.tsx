@@ -15,7 +15,12 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [{ url: '/icon-512.png', sizes: '512x512', type: 'image/png' }, { url: '/logo.png' }],
-    apple: [{ url: '/icon-512.png' }],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: BRAND.name,                 // nombre bajo el ícono en iPhone
+    statusBarStyle: 'black-translucent',
   },
   openGraph: {
     type: 'website', siteName: BRAND.fullName, title: BRAND.fullName, description: DESC,
