@@ -60,7 +60,7 @@ async function DualTable({ regionName }: { regionName: (id: string | null) => st
     <div className="card overflow-hidden">
       <div className="flex items-center justify-between bg-gradient-to-r from-noche to-pista p-5 text-white">
         <div><h2 className="text-lg font-bold">Ranking Atleta Dual</h2>
-          <p className="text-sm text-white/70">Pádel + Playa · bonus 15% por competir en ambos</p></div>
+          <p className="text-sm text-white/70">Pádel + Playa · ranking combinado de ambas disciplinas</p></div>
       </div>
       {rows.length === 0 ? <Empty /> : (
         <table className="w-full text-sm">
