@@ -33,10 +33,20 @@ export async function getSponsors() {
   const s = await db()
   return safe<Sponsor[]>(s.from('sponsors').select('*').eq('is_active', true).order('sort_order'))
 }
-export async function getPlayerRanking(sport: Sport) {
+export async function getPlayerRanking(
+  sport: Sport,
+  opts: { gender?: string; categoryName?: string; search?: string; limit?: number } = {}
+) {
   const s = await db()
-  return safe<PlayerRankingRow[]>(
-    s.from('v_player_ranking').select('*').eq('sport', sport).order('position').limit(200))
+  let q = s.from('v_player_ranking').select('*').eq('sport', sport)
+  if (opts.gender) q = q.eq('gender', opts.gender)
+  if (opts.categoryName) q = q.eq('category_name', opts.categoryName)
+  if (opts.search && opts.search.trim()) q = q.ilike('full_name', `%${opts.search.trim()}%`)
+  // Con categoría: posición determinista de la vista. Sin categoría (Todas): por puntos.
+  q = opts.categoryName
+    ? q.order('position')
+    : q.order('points', { ascending: false }).order('full_name')
+  return safe<PlayerRankingRow[]>(q.limit(opts.limit ?? 300))
 }
 export async function getDualRanking() {
   const s = await db()
@@ -103,8 +113,8 @@ export async function getDashboard(): Promise<Dashboard> {
       safe<any[]>(s.from('regions').select('id, name, sort_order').order('sort_order')),
       safe<any[]>(s.from('v_team_standings').select('team_id, points')),
       safe<any[]>(s.from('v_dual_ranking').select('full_name, dual_score').order('position').limit(10)),
-      safe<any[]>(s.from('v_player_ranking').select('full_name, points, sport').eq('sport','padel').order('position').limit(10)),
-      safe<any[]>(s.from('v_player_ranking').select('full_name, points, sport').eq('sport','playa').order('position').limit(10)),
+      safe<any[]>(s.from('v_player_ranking').select('full_name, points, sport').eq('sport','padel').order('points', { ascending: false }).limit(10)),
+      safe<any[]>(s.from('v_player_ranking').select('full_name, points, sport').eq('sport','playa').order('points', { ascending: false }).limit(10)),
       safe<any[]>(s.from('matches').select('id').eq('status','finalizado')),
     ])
     const teamPoints = new Map<string, number>()

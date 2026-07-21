@@ -1,12 +1,12 @@
 import Link from 'next/link'
-import { getPlayerRanking, getDualRanking, getTeamStandings, getRegions } from '@/lib/data'
+import { getPlayerRanking, getDualRanking, getTeamStandings, getRegions, getCategories } from '@/lib/data'
 import { SPORTS } from '@/lib/config'
-import type { Sport } from '@/lib/types'
+import type { Sport, Category } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Rankings' }
 
-type Search = { tab?: string; sport?: string; region?: string }
+type Search = { tab?: string; sport?: string; region?: string; genero?: string; cat?: string; q?: string }
 
 function Tab({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
   return (
@@ -29,13 +29,16 @@ function Avatar({ name, url }: { name: string; url?: string | null }) {
 export default async function RankingsPage({ searchParams }: { searchParams: Search }) {
   const tab = searchParams.tab ?? (searchParams.sport ? 'individual' : 'dual')
   const sport = (searchParams.sport as Sport) ?? 'padel'
-  const regions = await getRegions()
+  const genero = searchParams.genero ?? 'M'
+  const cat = searchParams.cat ?? ''
+  const q = searchParams.q ?? ''
+  const [regions, categories] = await Promise.all([getRegions(), getCategories()])
   const regionName = (id: string | null) => regions.find(r => r.id === id)?.name ?? '—'
 
   return (
     <div className="container-app py-10">
       <h1 className="text-3xl font-black text-noche">Rankings</h1>
-      <p className="mt-1 text-slate-500">Individual por deporte · Atleta Dual · Clasificación de equipos.</p>
+      <p className="mt-1 text-slate-500">Individual por deporte, género y categoría · Atleta Dual · Clasificación de equipos.</p>
 
       <div className="mt-6 flex flex-wrap gap-2">
         <Tab href="/rankings?tab=dual" active={tab === 'dual'}>🏆 Atleta Dual</Tab>
@@ -47,7 +50,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
 
       <div className="mt-6">
         {tab === 'dual' && <DualTable regionName={regionName} />}
-        {tab === 'individual' && <IndividualTable sport={sport} regionName={regionName} />}
+        {tab === 'individual' && <IndividualTable sport={sport} genero={genero} cat={cat} q={q} categories={categories} regionName={regionName} />}
         {tab === 'teams' && <TeamsTable sport={sport} regionName={regionName} />}
       </div>
     </div>
@@ -87,26 +90,65 @@ async function DualTable({ regionName }: { regionName: (id: string | null) => st
   )
 }
 
-async function IndividualTable({ sport, regionName }: { sport: Sport; regionName: (id: string | null) => string }) {
-  const rows = await getPlayerRanking(sport)
+async function IndividualTable({
+  sport, genero, cat, q, categories, regionName,
+}: {
+  sport: Sport; genero: string; cat: string; q: string; categories: Category[];
+  regionName: (id: string | null) => string
+}) {
   const s = SPORTS[sport]
+  // divisiones distintas del deporte, en orden
+  const divisions = Array.from(new Set(categories.filter(c => c.sport === sport).map(c => c.name)))
+  const rows = await getPlayerRanking(sport, {
+    gender: genero || undefined,
+    categoryName: cat || undefined,
+    search: q || undefined,
+  })
+
   return (
     <div className="card overflow-hidden">
       <div className="p-5 text-white" style={{ backgroundColor: s.color }}>
         <h2 className="text-lg font-bold">{s.icon} Ranking Individual · {s.label}</h2>
       </div>
+
+      {/* Filtros estilo circuito profesional */}
+      <form method="get" action="/rankings" className="flex flex-wrap items-end gap-3 border-b border-slate-100 bg-slate-50 p-4">
+        <input type="hidden" name="tab" value="individual" />
+        <input type="hidden" name="sport" value={sport} />
+        <div>
+          <label className="block text-xs font-semibold text-slate-500">Género</label>
+          <select name="genero" defaultValue={genero} className="input mt-1 !py-2">
+            <option value="M">Masculino</option>
+            <option value="F">Femenino</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-500">Categoría / División</label>
+          <select name="cat" defaultValue={cat} className="input mt-1 !py-2">
+            <option value="">Todas las divisiones</option>
+            {divisions.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+        <div className="flex-1 min-w-[160px]">
+          <label className="block text-xs font-semibold text-slate-500">Buscar jugador</label>
+          <input name="q" defaultValue={q} placeholder="Nombre…" className="input mt-1 !py-2" />
+        </div>
+        <button className="btn-primary !py-2">Filtrar</button>
+      </form>
+
       {rows.length === 0 ? <Empty /> : (
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
-            <tr><th className="p-3">#</th><th className="p-3">Jugador</th><th className="p-3">Región</th>
-              <th className="p-3 text-center">PJ</th><th className="p-3 text-right">Puntos</th></tr>
+            <tr><th className="p-3">#</th><th className="p-3">Jugador</th><th className="p-3">Equipo</th>
+              <th className="p-3">Zona</th><th className="p-3 text-center">PJ</th><th className="p-3 text-right">Puntos</th></tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {rows.map(r => (
-              <tr key={r.player_id} className="hover:bg-slate-50">
-                <td className="p-3 font-black text-slate-300">{r.position}</td>
+            {rows.map((r, idx) => (
+              <tr key={`${r.player_id}-${r.category_id ?? 'x'}`} className="hover:bg-slate-50">
+                <td className="p-3 font-black text-slate-300">{cat ? r.position : idx + 1}</td>
                 <td className="p-3"><Link href={r.slug ? `/jugadores/${r.slug}` : '#'} className="flex items-center gap-3 font-semibold hover:text-pista">
                   <Avatar name={r.full_name} url={r.photo_url} />{r.full_name}</Link></td>
+                <td className="p-3 text-slate-500">{r.team_name ?? '—'}</td>
                 <td className="p-3 text-slate-500">{regionName(r.region_id)}</td>
                 <td className="p-3 text-center text-slate-500">{r.matches_played}</td>
                 <td className="p-3 text-right text-lg font-black text-noche">{r.points}</td>
@@ -155,5 +197,5 @@ async function TeamsTable({ sport, regionName }: { sport: Sport; regionName: (id
 
 function Empty() {
   return <p className="p-8 text-center text-sm text-slate-400">
-    Aún no hay datos. Corre <code>supabase/seed.sql</code> o carga resultados en el panel admin.</p>
+    Sin resultados para este filtro todavía. Cambia de categoría o carga resultados en el panel admin.</p>
 }

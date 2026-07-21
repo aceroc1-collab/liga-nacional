@@ -32,27 +32,42 @@ create view v_player_ranking as
 with base as (
   select
     p.id as player_id, p.full_name, p.slug, p.gender, p.photo_url, p.region_id,
-    pp.season_id, pp.sport,
+    pp.season_id, pp.sport, m.category_id,
     coalesce(sum(pp.points),0)    as points,
     count(distinct pp.match_id)   as matches_played
   from players p
   join player_points pp on pp.player_id = p.id
-  group by p.id, pp.season_id, pp.sport
+  left join matches m on m.id = pp.match_id
+  group by p.id, pp.season_id, pp.sport, m.category_id
 )
 select
-  b.*,
-  coalesce(pr.rating, 1500) as hidden_rating,     -- solo para desempate/orden
+  b.player_id, b.full_name, b.slug, b.gender, b.photo_url, b.region_id,
+  b.season_id, b.sport, b.category_id,
+  cat.name as category_name, cat.level_label,
+  b.points, b.matches_played,
+  tm.team_name,
+  coalesce(pr.rating, 1500) as hidden_rating,
   row_number() over (
-    partition by b.season_id, b.sport
+    partition by b.season_id, b.sport, b.gender, b.category_id
     order by b.points desc,
-             coalesce(pr.rating, 1500) desc,        -- juez silencioso Glicko
-             coalesce(pr.rd, 350) asc,              -- más certeza primero
+             coalesce(pr.rating, 1500) desc,
+             coalesce(pr.rd, 350) asc,
              b.full_name asc,
-             b.player_id asc                        -- criterio final 100% estable
+             b.player_id asc
   ) as position
 from base b
-left join player_ratings pr
-  on pr.player_id = b.player_id and pr.sport = b.sport;
+left join categories cat on cat.id = b.category_id
+left join player_ratings pr on pr.player_id = b.player_id and pr.sport = b.sport
+left join lateral (
+  select t.name as team_name
+  from team_players tpp
+  join teams t on t.id = tpp.team_id
+  where tpp.player_id = b.player_id
+    and t.season_id = b.season_id
+    and t.sport = b.sport
+    and (b.category_id is null or t.category_id = b.category_id)
+  limit 1
+) tm on true;
 
 -- ----------------------------------------------------------------------------
 -- RANKING DUAL — normalizado (NO suma puntos crudos de deportes distintos)
@@ -96,10 +111,10 @@ select
   d.padel_points, d.playa_points,
   (d.padel_points + d.playa_points) as total_points,
   -- Dual Score normalizado y comparable entre deportes (0–1050 aprox)
-  round((0.5 * d.padel_norm + 0.5 * d.playa_norm) * 1.05, 2) as dual_score,
+  round(0.5 * d.padel_norm + 0.5 * d.playa_norm, 2) as dual_score,
   row_number() over (
     partition by d.season_id
-    order by round((0.5 * d.padel_norm + 0.5 * d.playa_norm) * 1.05, 2) desc,
+    order by round(0.5 * d.padel_norm + 0.5 * d.playa_norm, 2) desc,
              (d.padel_norm + d.playa_norm) desc,
              p.full_name asc,
              d.player_id asc

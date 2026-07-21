@@ -25,7 +25,10 @@ export interface Sponsor {
 }
 export interface PlayerRankingRow {
   player_id: string; full_name: string; slug: string | null; gender: Gender; photo_url: string | null;
-  region_id: string | null; sport: Sport; points: number; matches_played: number; position: number;
+  region_id: string | null; sport: Sport;
+  category_id: string | null; category_name: string | null; level_label: string | null;
+  team_name: string | null;
+  points: number; matches_played: number; hidden_rating?: number; position: number;
 }
 export interface DualRankingRow {
   player_id: string; full_name: string; slug: string | null; photo_url: string | null; region_id: string | null;
