@@ -35,3 +35,9 @@ export interface TeamStandingRow {
   team_id: string; name: string; slug: string | null; logo_url: string | null; sport: Sport;
   category_id: string; region_id: string; points: number; wins: number; losses: number; played: number; position: number;
 }
+
+// --- Motor de ranking híbrido (Capa B, Glicko-2) ---
+export interface PlayerRatingRow {
+  player_id: string; sport: Sport; rating: number; rd: number; vol: number;
+  matches: number; category: 'A' | 'B' | 'C' | 'D' | null; updated_at: string;
+}
