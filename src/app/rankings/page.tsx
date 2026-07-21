@@ -98,7 +98,9 @@ async function IndividualTable({
   categories: Category[]; regions: Region[]; regionName: (id: string | null) => string
 }) {
   const s = SPORTS[sport]
-  const divisions = Array.from(new Set(categories.filter(c => c.sport === sport).map(c => c.name)))
+  const divisions = Array.from(
+    new Map(categories.filter(c => c.sport === sport).map(c => [c.name, c.level_label])).entries()
+  ).map(([name, label]) => ({ name, label }))
   // Tenis playa incluye Mixto como género; pádel solo M/F
   const genders = sport === 'playa'
     ? [['M','Masculino'],['F','Femenino'],['Mixto','Mixto']]
@@ -130,7 +132,7 @@ async function IndividualTable({
           <label className="block text-xs font-semibold text-slate-500">Categoría / División</label>
           <select name="cat" defaultValue={cat} className="input mt-1 !py-2">
             <option value="">Todas las divisiones</option>
-            {divisions.map(d => <option key={d} value={d}>{d}</option>)}
+            {divisions.map(d => <option key={d.name} value={d.name}>{d.label ? `${d.name} · ${d.label}` : d.name}</option>)}
           </select>
         </div>
         <div>
