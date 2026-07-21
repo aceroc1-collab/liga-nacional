@@ -1,5 +1,6 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
+import { inscriptionAmount } from '@/lib/config'
 
 export type InscriptionResult = { ok: boolean; message: string }
 
@@ -18,6 +19,10 @@ export async function submitInscription(formData: FormData): Promise<Inscription
     })
   })
 
+  const sportVal = (formData.get('sport') as string) === 'playa' ? 'playa' : 'padel'
+  const dual = formData.get('dual') === '1' || formData.get('dual') === 'on'
+  const amount = inscriptionAmount(sportVal, dual)
+
   const payload = {
     season_id: (formData.get('season_id') as string) || null,
     sport: formData.get('sport') as string,
@@ -30,6 +35,7 @@ export async function submitInscription(formData: FormData): Promise<Inscription
     contact_phone: formData.get('contact_phone') as string,
     contact_email: formData.get('contact_email') as string,
     notes: (formData.get('notes') as string) || null,
+    amount,
     status: 'pendiente' as const,
     submitted_at: new Date().toISOString(),
   }

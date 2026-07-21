@@ -42,8 +42,8 @@ export default async function InscripcionesPage() {
         <div className="card p-5">
           <h3 className="font-bold">Atleta Dual</h3>
           <p className="mt-2 text-sm text-slate-600">
-            Marca “Pádel” y “Playa” en tus jugadores que compiten en ambos: entran al
-            ranking Atleta Dual con bonus especial.
+            Si compites en pádel y tenis playa, marca la casilla “Atleta Dual” en el
+            formulario y obtienes <b>10% de descuento</b> en tu inscripción.
           </p>
         </div>
       </aside>
