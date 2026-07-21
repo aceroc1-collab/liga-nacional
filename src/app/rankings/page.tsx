@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getPlayerRanking, getDualRanking, getTeamStandings, getRegions, getCategories } from '@/lib/data'
 import { SPORTS } from '@/lib/config'
-import type { Sport, Category } from '@/lib/types'
+import type { Sport, Category, Region } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Rankings' }
@@ -31,6 +31,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
   const sport = (searchParams.sport as Sport) ?? 'padel'
   const genero = searchParams.genero ?? 'M'
   const cat = searchParams.cat ?? ''
+  const region = searchParams.region ?? ''
   const q = searchParams.q ?? ''
   const [regions, categories] = await Promise.all([getRegions(), getCategories()])
   const regionName = (id: string | null) => regions.find(r => r.id === id)?.name ?? '—'
@@ -38,7 +39,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
   return (
     <div className="container-app py-10">
       <h1 className="text-3xl font-black text-noche">Rankings</h1>
-      <p className="mt-1 text-slate-500">Individual por deporte, género y categoría · Atleta Dual · Clasificación de equipos.</p>
+      <p className="mt-1 text-slate-500">Individual por deporte, género, categoría y zona · Atleta Dual · Clasificación de equipos.</p>
 
       <div className="mt-6 flex flex-wrap gap-2">
         <Tab href="/rankings?tab=dual" active={tab === 'dual'}>🏆 Atleta Dual</Tab>
@@ -50,7 +51,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
 
       <div className="mt-6">
         {tab === 'dual' && <DualTable regionName={regionName} />}
-        {tab === 'individual' && <IndividualTable sport={sport} genero={genero} cat={cat} q={q} categories={categories} regionName={regionName} />}
+        {tab === 'individual' && <IndividualTable sport={sport} genero={genero} cat={cat} region={region} q={q} categories={categories} regions={regions} regionName={regionName} />}
         {tab === 'teams' && <TeamsTable sport={sport} regionName={regionName} />}
       </div>
     </div>
@@ -91,17 +92,21 @@ async function DualTable({ regionName }: { regionName: (id: string | null) => st
 }
 
 async function IndividualTable({
-  sport, genero, cat, q, categories, regionName,
+  sport, genero, cat, region, q, categories, regions, regionName,
 }: {
-  sport: Sport; genero: string; cat: string; q: string; categories: Category[];
-  regionName: (id: string | null) => string
+  sport: Sport; genero: string; cat: string; region: string; q: string;
+  categories: Category[]; regions: Region[]; regionName: (id: string | null) => string
 }) {
   const s = SPORTS[sport]
-  // divisiones distintas del deporte, en orden
   const divisions = Array.from(new Set(categories.filter(c => c.sport === sport).map(c => c.name)))
+  // Tenis playa incluye Mixto como género; pádel solo M/F
+  const genders = sport === 'playa'
+    ? [['M','Masculino'],['F','Femenino'],['Mixto','Mixto']]
+    : [['M','Masculino'],['F','Femenino']]
   const rows = await getPlayerRanking(sport, {
     gender: genero || undefined,
     categoryName: cat || undefined,
+    regionId: region || undefined,
     search: q || undefined,
   })
 
@@ -111,15 +116,14 @@ async function IndividualTable({
         <h2 className="text-lg font-bold">{s.icon} Ranking Individual · {s.label}</h2>
       </div>
 
-      {/* Filtros estilo circuito profesional */}
+      {/* Filtros estilo circuito profesional (FITP / SNP) */}
       <form method="get" action="/rankings" className="flex flex-wrap items-end gap-3 border-b border-slate-100 bg-slate-50 p-4">
         <input type="hidden" name="tab" value="individual" />
         <input type="hidden" name="sport" value={sport} />
         <div>
           <label className="block text-xs font-semibold text-slate-500">Género</label>
           <select name="genero" defaultValue={genero} className="input mt-1 !py-2">
-            <option value="M">Masculino</option>
-            <option value="F">Femenino</option>
+            {genders.map(([v,l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </div>
         <div>
@@ -129,7 +133,14 @@ async function IndividualTable({
             {divisions.map(d => <option key={d} value={d}>{d}</option>)}
           </select>
         </div>
-        <div className="flex-1 min-w-[160px]">
+        <div>
+          <label className="block text-xs font-semibold text-slate-500">Zona / Región</label>
+          <select name="region" defaultValue={region} className="input mt-1 !py-2">
+            <option value="">Nacional</option>
+            {regions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+        </div>
+        <div className="flex-1 min-w-[150px]">
           <label className="block text-xs font-semibold text-slate-500">Buscar jugador</label>
           <input name="q" defaultValue={q} placeholder="Nombre…" className="input mt-1 !py-2" />
         </div>
@@ -145,7 +156,7 @@ async function IndividualTable({
           <tbody className="divide-y divide-slate-100">
             {rows.map((r, idx) => (
               <tr key={`${r.player_id}-${r.category_id ?? 'x'}`} className="hover:bg-slate-50">
-                <td className="p-3 font-black text-slate-300">{cat ? r.position : idx + 1}</td>
+                <td className="p-3 font-black text-slate-300">{idx + 1}</td>
                 <td className="p-3"><Link href={r.slug ? `/jugadores/${r.slug}` : '#'} className="flex items-center gap-3 font-semibold hover:text-pista">
                   <Avatar name={r.full_name} url={r.photo_url} />{r.full_name}</Link></td>
                 <td className="p-3 text-slate-500">{r.team_name ?? '—'}</td>
@@ -197,5 +208,5 @@ async function TeamsTable({ sport, regionName }: { sport: Sport; regionName: (id
 
 function Empty() {
   return <p className="p-8 text-center text-sm text-slate-400">
-    Sin resultados para este filtro todavía. Cambia de categoría o carga resultados en el panel admin.</p>
+    Sin resultados para este filtro todavía. Cambia de categoría, género o zona, o carga resultados en el panel admin.</p>
 }

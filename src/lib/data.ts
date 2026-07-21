@@ -35,12 +35,13 @@ export async function getSponsors() {
 }
 export async function getPlayerRanking(
   sport: Sport,
-  opts: { gender?: string; categoryName?: string; search?: string; limit?: number } = {}
+  opts: { gender?: string; categoryName?: string; regionId?: string; search?: string; limit?: number } = {}
 ) {
   const s = await db()
   let q = s.from('v_player_ranking').select('*').eq('sport', sport)
   if (opts.gender) q = q.eq('gender', opts.gender)
   if (opts.categoryName) q = q.eq('category_name', opts.categoryName)
+  if (opts.regionId) q = q.eq('region_id', opts.regionId)
   if (opts.search && opts.search.trim()) q = q.ilike('full_name', `%${opts.search.trim()}%`)
   // Con categoría: posición determinista de la vista. Sin categoría (Todas): por puntos.
   q = opts.categoryName
