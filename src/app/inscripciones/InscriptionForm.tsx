@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Script from 'next/script'
 import { submitInscription, type InscriptionResult } from './actions'
 import type { Region, Category, Club } from '@/lib/types'
 import { SPORTS, FEES, inscriptionAmount } from '@/lib/config'
@@ -12,6 +13,7 @@ export default function InscriptionForm({
   const [rows, setRows] = useState([0, 1, 2, 3])
   const [result, setResult] = useState<InscriptionResult | null>(null)
   const [loading, setLoading] = useState(false)
+  const captchaSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
   const cats = categories.filter(c => c.sport === sport)
   const base = FEES[sport]
@@ -25,6 +27,7 @@ export default function InscriptionForm({
     const r = await submitInscription(fd)
     setResult(r); setLoading(false)
     if (r.ok) { e.currentTarget.reset(); setDual(false) }
+    try { (window as any).turnstile?.reset() } catch {}
   }
 
   return (
@@ -131,6 +134,14 @@ export default function InscriptionForm({
           {result.message}
         </div>
       )}
+      {captchaSiteKey && (
+        <div>
+          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer strategy="afterInteractive" />
+          <div className="cf-turnstile" data-sitekey={captchaSiteKey} data-language="es" />
+          <p className="mt-1 text-xs text-slate-400">Verificación de seguridad para evitar registros automáticos.</p>
+        </div>
+      )}
+
       <button disabled={loading} className="btn-primary w-full">
         {loading ? 'Enviando…' : `Enviar solicitud · ${money(total)}`}
       </button>
