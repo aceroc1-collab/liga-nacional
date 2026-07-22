@@ -62,12 +62,13 @@ export async function getTeamStandings(sport?: Sport) {
 }
 export async function getPlayerBySlug(slug: string) {
   const s = await db()
-  try { const { data } = await s.from('players').select('*').eq('slug', slug).single(); return data as Player | null }
+  // Seguridad: no se piden columnas con datos personales (cedula, telefono, email, fecha nac.)
+  try { const { data } = await s.from('players').select('id, full_name, slug, gender, region_id, home_club_id, photo_url, cover_url, bio, city, instagram, plays_padel, plays_playa, is_dual, created_at').eq('slug', slug).single(); return data as Player | null }
   catch { return null }
 }
 export async function getPlayers() {
   const s = await db()
-  return safe<Player[]>(s.from('players').select('*').order('full_name'))
+  return safe<Player[]>(s.from('players').select('id, full_name, slug, gender, region_id, home_club_id, photo_url, cover_url, bio, city, instagram, plays_padel, plays_playa, is_dual, created_at').order('full_name'))
 }
 
 export async function getMatches(sport?: Sport) {
