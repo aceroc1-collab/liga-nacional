@@ -23,7 +23,7 @@ export default function Nav() {
         {/* Logo + marca */}
         <Link href="/" onClick={()=>setOpen(false)} className="flex shrink-0 items-center gap-2.5">
           <img src={BRAND.logo} alt={BRAND.fullName}
-            className="h-11 w-11 shrink-0 rounded-xl bg-white object-contain p-0.5 ring-1 ring-slate-200" />
+            className="h-12 w-auto max-w-[190px] shrink-0 object-contain" />
           <span className="whitespace-nowrap font-black leading-tight text-noche">
             {BRAND.name}
             <span className="block text-[10px] font-semibold uppercase tracking-widest text-brasa">VZLA</span>
