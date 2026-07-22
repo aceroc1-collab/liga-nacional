@@ -233,3 +233,13 @@ export async function setUserRole(userId: string, role: string): Promise<R> {
   const { error } = await s.from('profiles').update({ role }).eq('id', userId)
   if (error) return err(error.message); revalidateAll(); return ok('Rol actualizado a ' + role)
 }
+
+// Asignar la Zona/Region a un usuario (Coordinador Regional). Solo admin.
+export async function setUserRegion(userId: string, regionId: string): Promise<R> {
+  const s = await requireStaff()
+  const { data: { user } } = await s.auth.getUser()
+  const { data: me } = await s.from('profiles').select('role').eq('id', user.id).single()
+  if (me?.role !== 'admin') return err('Solo un administrador principal puede asignar regiones')
+  const { error } = await s.from('profiles').update({ region_id: regionId || null }).eq('id', userId)
+  if (error) return err(error.message); revalidateAll(); return ok('Zona/Región asignada')
+}
