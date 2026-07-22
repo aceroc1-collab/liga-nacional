@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import { BRAND, SPORTS } from '@/lib/config'
-import { getRegions, getDualRanking, getSponsors, getClubs } from '@/lib/data'
+import { getRegions, getDualRanking, getSponsors, getClubs, getLeagueStats } from '@/lib/data'
 
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const [regions, dual, sponsors, clubs] = await Promise.all([
-    getRegions(), getDualRanking(), getSponsors(), getClubs(),
+  const [regions, dual, sponsors, clubs, stats] = await Promise.all([
+    getRegions(), getDualRanking(), getSponsors(), getClubs(), getLeagueStats(),
   ])
   const topDual = dual.slice(0, 5)
 
@@ -34,10 +34,10 @@ export default async function Home() {
           </div>
           <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
-              { k: regions.length || 5, v: 'Regiones' },
-              { k: clubs.length, v: 'Clubes sede' },
-              { k: 2, v: 'Deportes' },
-              { k: '1', v: 'Master Nacional' },
+              { k: stats.clubs, v: 'Clubes miembros' },
+              { k: stats.players, v: 'Atletas inscritos' },
+              { k: stats.matches, v: 'Encuentros jugados' },
+              { k: stats.rubbers, v: 'Partidos individuales' },
             ].map((s, i) => (
               <div key={i} className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
                 <div className="text-3xl font-black">{s.k}</div>

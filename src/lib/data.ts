@@ -35,7 +35,7 @@ export async function getSponsors() {
 }
 export async function getPlayerRanking(
   sport: Sport,
-  opts: { gender?: string; categoryName?: string; regionId?: string; search?: string; limit?: number } = {}
+  opts: { gender?: string; categoryName?: string; regionId?: string; search?: string; orden?: string; limit?: number } = {}
 ) {
   const s = await db()
   let q = s.from('v_player_ranking').select('*').eq('sport', sport)
@@ -44,9 +44,11 @@ export async function getPlayerRanking(
   if (opts.regionId) q = q.eq('region_id', opts.regionId)
   if (opts.search && opts.search.trim()) q = q.ilike('full_name', `%${opts.search.trim()}%`)
   // Con categoría: posición determinista de la vista. Sin categoría (Todas): por puntos.
-  q = opts.categoryName
-    ? q.order('position')
-    : q.order('points', { ascending: false }).order('full_name')
+  q = opts.orden === 'nivel'
+    ? q.order('hidden_rating', { ascending: false }).order('full_name')
+    : opts.categoryName
+      ? q.order('position')
+      : q.order('points', { ascending: false }).order('full_name')
   return safe<PlayerRankingRow[]>(q.limit(opts.limit ?? 300))
 }
 export async function getDualRanking() {
@@ -150,4 +152,37 @@ export async function getDashboard(): Promise<Dashboard> {
       clubs: clubStats,
     }
   } catch { return empty }
+}
+
+// --- v2: pulso del ranking, reclasificaciones y reclamos ---
+export async function getRankingPulse(sport: Sport) {
+  const s = await db()
+  return safe<any[]>(s.from('v_ranking_pulse').select('*').eq('sport', sport)
+    .order('delta', { ascending: false }).limit(1))
+}
+export async function getReclasificaciones(sport?: Sport) {
+  const s = await db()
+  let q = s.from('v_reclasificaciones').select('*').order('rating', { ascending: false })
+  if (sport) q = q.eq('sport', sport)
+  return safe<any[]>(q.limit(300))
+}
+export async function getClaims() {
+  const s = await db()
+  return safe<any[]>(s.from('claims').select('*').order('created_at', { ascending: false }).limit(200))
+}
+
+/** Números vivos de credibilidad para la portada. */
+export async function getLeagueStats() {
+  const s = await db()
+  const [clubs, players, teams, matches, rubbers] = await Promise.all([
+    safe<any[]>(s.from('clubs').select('id')),
+    safe<any[]>(s.from('players').select('id')),
+    safe<any[]>(s.from('teams').select('id')),
+    safe<any[]>(s.from('matches').select('id').eq('status', 'finalizado')),
+    safe<any[]>(s.from('match_rubbers').select('id').not('home_won', 'is', null)),
+  ])
+  return {
+    clubs: clubs.length, players: players.length, teams: teams.length,
+    matches: matches.length, rubbers: rubbers.length,
+  }
 }

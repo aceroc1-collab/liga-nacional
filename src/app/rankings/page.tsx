@@ -1,12 +1,12 @@
 import Link from 'next/link'
-import { getPlayerRanking, getDualRanking, getTeamStandings, getRegions, getCategories } from '@/lib/data'
+import { getPlayerRanking, getDualRanking, getTeamStandings, getRegions, getCategories, getRankingPulse } from '@/lib/data'
 import { SPORTS } from '@/lib/config'
 import type { Sport, Category, Region } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Rankings' }
 
-type Search = { tab?: string; sport?: string; region?: string; genero?: string; cat?: string; q?: string }
+type Search = { tab?: string; sport?: string; region?: string; genero?: string; cat?: string; q?: string; orden?: string }
 
 function Tab({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
   return (
@@ -33,6 +33,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
   const cat = searchParams.cat ?? ''
   const region = searchParams.region ?? ''
   const q = searchParams.q ?? ''
+  const orden = searchParams.orden ?? 'puntos'
   const [regions, categories] = await Promise.all([getRegions(), getCategories()])
   const regionName = (id: string | null) => regions.find(r => r.id === id)?.name ?? '—'
 
@@ -51,7 +52,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
 
       <div className="mt-6">
         {tab === 'dual' && <DualTable regionName={regionName} />}
-        {tab === 'individual' && <IndividualTable sport={sport} genero={genero} cat={cat} region={region} q={q} categories={categories} regions={regions} regionName={regionName} />}
+        {tab === 'individual' && <IndividualTable sport={sport} genero={genero} cat={cat} region={region} q={q} orden={orden} categories={categories} regions={regions} regionName={regionName} />}
         {tab === 'teams' && <TeamsTable sport={sport} regionName={regionName} />}
       </div>
     </div>
@@ -92,9 +93,9 @@ async function DualTable({ regionName }: { regionName: (id: string | null) => st
 }
 
 async function IndividualTable({
-  sport, genero, cat, region, q, categories, regions, regionName,
+  sport, genero, cat, region, q, orden, categories, regions, regionName,
 }: {
-  sport: Sport; genero: string; cat: string; region: string; q: string;
+  sport: Sport; genero: string; cat: string; region: string; q: string; orden: string;
   categories: Category[]; regions: Region[]; regionName: (id: string | null) => string
 }) {
   const s = SPORTS[sport]
@@ -105,17 +106,43 @@ async function IndividualTable({
   const genders = sport === 'playa'
     ? [['M','Masculino'],['F','Femenino'],['Mixto','Mixto']]
     : [['M','Masculino'],['F','Femenino']]
-  const rows = await getPlayerRanking(sport, {
-    gender: genero || undefined,
-    categoryName: cat || undefined,
-    regionId: region || undefined,
-    search: q || undefined,
-  })
+  const [rows, pulse] = await Promise.all([
+    getPlayerRanking(sport, {
+      gender: genero || undefined,
+      categoryName: cat || undefined,
+      regionId: region || undefined,
+      search: q || undefined,
+      orden,
+    }),
+    getRankingPulse(sport),
+  ])
+  const lider = rows[0]
+  const top = pulse[0]
+  const fecha = top?.updated_at
+    ? new Date(top.updated_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })
+    : '—'
+  const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
+    <div className="card p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</div>
+      <div className="mt-1 truncate text-xl font-black text-noche">{value}</div>
+      {sub && <div className="text-xs text-slate-400">{sub}</div>}
+    </div>
+  )
 
   return (
     <div className="card overflow-hidden">
       <div className="p-5 text-white" style={{ backgroundColor: s.color }}>
         <h2 className="text-lg font-bold">{s.icon} Ranking Individual · {s.label}</h2>
+      </div>
+
+      {/* Pulso del ranking (estilo circuito pro) */}
+      <div className="grid gap-3 border-b border-slate-100 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Total jugadores" value={String(rows.length)} sub="en este filtro" />
+        <Stat label="Líder actual" value={lider ? lider.full_name : '—'}
+              sub={lider ? `${lider.points} pts · Nivel ${Number(lider.hidden_rating ?? 1500).toFixed(0)}` : undefined} />
+        <Stat label="Mayor subida" value={top && Number(top.delta) > 0 ? `+${Number(top.delta).toFixed(1)}` : '—'}
+              sub={top && Number(top.delta) > 0 ? top.full_name : 'sin movimientos aún'} />
+        <Stat label="Última actualización" value={fecha} sub="del motor de nivel" />
       </div>
 
       {/* Filtros estilo circuito profesional (FITP / SNP) */}
@@ -142,6 +169,13 @@ async function IndividualTable({
             {regions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-500">Ordenar por</label>
+          <select name="orden" defaultValue={orden} className="input mt-1 !py-2">
+            <option value="puntos">Puntos</option>
+            <option value="nivel">Nivel (rating)</option>
+          </select>
+        </div>
         <div className="flex-1 min-w-[150px]">
           <label className="block text-xs font-semibold text-slate-500">Buscar jugador</label>
           <input name="q" defaultValue={q} placeholder="Nombre…" className="input mt-1 !py-2" />
@@ -153,7 +187,8 @@ async function IndividualTable({
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
             <tr><th className="p-3">#</th><th className="p-3">Jugador</th><th className="p-3">Equipo</th>
-              <th className="p-3">Zona</th><th className="p-3 text-center">PJ</th><th className="p-3 text-right">Puntos</th></tr>
+              <th className="p-3">Zona</th><th className="p-3 text-center">PJ</th>
+              <th className="p-3 text-right">Nivel</th><th className="p-3 text-right">Puntos</th></tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.map((r, idx) => (
@@ -164,6 +199,7 @@ async function IndividualTable({
                 <td className="p-3 text-slate-500">{r.team_name ?? '—'}</td>
                 <td className="p-3 text-slate-500">{regionName(r.region_id)}</td>
                 <td className="p-3 text-center text-slate-500">{r.matches_played}</td>
+                <td className="p-3 text-right font-bold text-pista">{Number((r as any).hidden_rating ?? 1500).toFixed(2)}</td>
                 <td className="p-3 text-right text-lg font-black text-noche">{r.points}</td>
               </tr>
             ))}

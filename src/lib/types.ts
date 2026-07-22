@@ -44,3 +44,21 @@ export interface PlayerRatingRow {
   player_id: string; sport: Sport; rating: number; rd: number; vol: number;
   matches: number; category: 'A' | 'B' | 'C' | 'D' | null; updated_at: string;
 }
+
+// --- v2: Nivel publico, reclasificaciones y reclamos ---
+export interface RankingPulse {
+  sport: Sport; full_name: string; rating: number; delta: number; updated_at: string;
+}
+export interface ReclasificacionRow {
+  player_id: string; full_name: string; slug: string | null; photo_url: string | null;
+  region_id: string | null; sport: Sport; rating: number; matches_played: number;
+  categoria_actual: string | null; categoria_sugerida: string | null;
+  movimiento: 'sube' | 'baja' | 'se_mantiene' | 'sin_datos';
+}
+export interface Claim {
+  id: string; tipo: string; sport: Sport | null; reported_name: string | null;
+  club_name: string | null; description: string; contact_name: string;
+  contact_email: string | null; contact_phone: string | null;
+  status: 'pendiente' | 'en_revision' | 'resuelto' | 'rechazado';
+  admin_notes: string | null; created_at: string; resolved_at: string | null;
+}

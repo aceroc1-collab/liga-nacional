@@ -6,11 +6,13 @@ import { BRAND } from '@/lib/config'
 const links = [
   { href: '/estadisticas', label: 'Dashboard' },
   { href: '/rankings', label: 'Rankings' },
+  { href: '/reclasificaciones', label: 'Reclasificaciones' },
   { href: '/clubes', label: 'Clubes' },
   { href: '/resultados', label: 'Resultados' },
   { href: '/reglamento', label: 'Reglamento' },
   { href: '/patrocinios', label: 'Patrocinios' },
   { href: '/inscripciones', label: 'Inscripciones' },
+  { href: '/reclamos', label: 'Reclamos' },
 ]
 
 export default function Nav() {

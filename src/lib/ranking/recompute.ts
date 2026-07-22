@@ -21,10 +21,17 @@ export async function runRecompute(s: any): Promise<RecomputeResult> {
     homeWon: row.home_won === true,
   }))
 
+  // Guarda el rating anterior para poder mostrar "mayor subida de la jornada"
+  const { data: prevRows } = await s.from('player_ratings').select('player_id, sport, rating')
+  const prevMap = new Map<string, number>(
+    (prevRows ?? []).map((r: any) => [`${r.sport}:${r.player_id}`, Number(r.rating)])
+  )
+
   const rows = recomputeRatings(rubbers)
   const payload = rows.map(r => ({
     player_id: r.playerId, sport: r.sport,
     rating: r.rating, rd: r.rd, vol: r.vol, matches: r.matches,
+    prev_rating: prevMap.get(`${r.sport}:${r.playerId}`) ?? r.rating,
     category: suggestCategory({ rating: r.rating, rd: r.rd, vol: r.vol }),
     updated_at: new Date().toISOString(),
   }))

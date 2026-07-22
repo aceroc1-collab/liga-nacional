@@ -243,3 +243,12 @@ export async function setUserRegion(userId: string, regionId: string): Promise<R
   const { error } = await s.from('profiles').update({ region_id: regionId || null }).eq('id', userId)
   if (error) return err(error.message); revalidateAll(); return ok('Zona/Región asignada')
 }
+
+// ---------- RECLAMOS ----------
+export async function updateClaim(id: string, status: string, notes: string): Promise<R> {
+  const s = await requireStaff()
+  const patch: any = { status, admin_notes: notes || null }
+  if (status === 'resuelto' || status === 'rechazado') patch.resolved_at = new Date().toISOString()
+  const { error } = await s.from('claims').update(patch).eq('id', id)
+  if (error) return err(error.message); revalidateAll(); return ok('Reclamo actualizado')
+}
