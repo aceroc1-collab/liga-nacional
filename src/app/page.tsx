@@ -35,7 +35,7 @@ export default async function Home() {
           <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
               { k: stats.clubs, v: 'Clubes miembros' },
-              { k: stats.players, v: 'Atletas inscritos' },
+              { k: stats.players, v: 'Atletas registrados' },
               { k: stats.matches, v: 'Encuentros jugados' },
               { k: stats.rubbers, v: 'Partidos individuales' },
             ].map((s, i) => (

@@ -38,7 +38,8 @@ export default function Nav() {
               {l.label}
             </Link>
           ))}
-          <Link href="/login" className="btn-primary ml-2 px-3 py-2 text-sm">Entrar</Link>
+          <Link href="/reclama" className="ml-2 rounded-lg bg-brasa px-3 py-2 text-sm font-bold text-white hover:bg-brasa/90">Reclama tu perfil</Link>
+          <Link href="/login" className="btn-primary ml-1 px-3 py-2 text-sm">Entrar</Link>
         </div>
 
         {/* Botón hamburguesa en móvil */}
@@ -62,6 +63,7 @@ export default function Nav() {
                 {l.label}
               </Link>
             ))}
+            <Link href="/reclama" onClick={()=>setOpen(false)} className="mt-2 rounded-lg bg-brasa px-3 py-3 text-center text-sm font-bold text-white">Reclama tu perfil</Link>
             <Link href="/login" onClick={()=>setOpen(false)} className="btn-primary mt-2">Entrar</Link>
           </div>
         </div>
