@@ -9,10 +9,8 @@ export type SearchResult = { ok: boolean; items: ProfileHit[]; message?: string 
 
 // Búsqueda por nombre: devuelve perfiles SIN reclamar que coinciden con lo escrito.
 export async function searchProfiles(query: string): Promise<SearchResult> {
-  const s: any = createClient()
-  const { data: { user } } = await s.auth.getUser()
-  if (!user) return { ok: false, items: [], message: 'Debes iniciar sesión para buscar tu perfil.' }
-
+  // Buscar es solo lectura (nombre + nivel, sin datos sensibles): no exige sesión
+  // y usa el cliente normal, que puede leer el nombre público de los jugadores.
   const tokens = String(query || '')
     .toLowerCase()
     .replace(/[,]/g, ' ')
@@ -21,20 +19,23 @@ export async function searchProfiles(query: string): Promise<SearchResult> {
     .filter(Boolean)
   if (tokens.join('').length < 3) return { ok: true, items: [] }
 
-  const db = createAdminClient()
-  let q = db.from('players')
+  const s: any = createClient()
+  let q = s.from('players')
     .select('id, full_name')
     .is('user_id', null)
     .eq('status', 'prospecto')
   for (const t of tokens) q = q.ilike('full_name', `%${t}%`)
-  const { data } = await q.order('full_name').limit(15)
+  const { data, error } = await q.order('full_name').limit(15)
+  if (error) return { ok: false, items: [], message: 'No se pudo buscar en este momento. Intenta de nuevo.' }
 
   const ids = (data || []).map((p: any) => p.id)
   const levels: Record<string, string> = {}
   if (ids.length) {
-    const { data: rs } = await db.from('player_ratings')
-      .select('player_id, category').eq('sport', 'padel').in('player_id', ids)
-    for (const r of rs || []) levels[r.player_id] = r.category
+    try {
+      const { data: rs } = await s.from('player_ratings')
+        .select('player_id, category').eq('sport', 'padel').in('player_id', ids)
+      for (const r of rs || []) levels[r.player_id] = r.category
+    } catch {}
   }
   const items: ProfileHit[] = (data || []).map((p: any) => ({
     id: p.id, full_name: p.full_name, tier: levels[p.id] ?? null,
