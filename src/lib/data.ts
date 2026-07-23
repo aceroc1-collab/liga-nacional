@@ -10,6 +10,24 @@ const safe = async <T,>(q: any): Promise<T> => {
   try { const { data } = await q; return (data ?? []) as T } catch { return ([] as unknown) as T }
 }
 
+// Trae TODAS las filas de una tabla paginando (PostgREST corta en 1000 por consulta).
+async function fetchAllRows<T = any>(s: any, table: string, columns: string, tune?: (q: any) => any): Promise<T[]> {
+  const page = 1000
+  let from = 0
+  const all: any[] = []
+  // Tope de seguridad: 100 páginas (100k filas)
+  for (let i = 0; i < 100; i++) {
+    let q = s.from(table).select(columns).range(from, from + page - 1)
+    if (tune) q = tune(q)
+    const { data, error } = await q
+    if (error || !data || data.length === 0) break
+    all.push(...data)
+    if (data.length < page) break
+    from += page
+  }
+  return all as T[]
+}
+
 export async function getRegions() {
   const s = await db()
   return safe<Region[]>(s.from('regions').select('*').order('sort_order'))
@@ -70,7 +88,7 @@ export async function getPlayerBySlug(slug: string) {
 }
 export async function getPlayers() {
   const s = await db()
-  return safe<Player[]>(s.from('players').select('id, full_name, slug, gender, region_id, home_club_id, photo_url, cover_url, bio, city, instagram, plays_padel, plays_playa, is_dual, created_at').order('full_name'))
+  return fetchAllRows<Player>(s, 'players', 'id, full_name, slug, gender, region_id, home_club_id, photo_url, cover_url, bio, city, instagram, plays_padel, plays_playa, is_dual, created_at', (q:any)=>q.order('full_name'))
 }
 
 export async function getMatches(sport?: Sport) {
@@ -111,7 +129,7 @@ export async function getDashboard(): Promise<Dashboard> {
   const empty: Dashboard = { totals:{players:0,duals:0,clubs:0,teams:0,matches:0,padelPlayers:0,playaPlayers:0}, byRegion:[], topDual:[], topPadel:[], topPlaya:[], clubs:[] }
   try {
     const [players, clubs, teams, regions, standings, dual, padel, playa, matchesFin] = await Promise.all([
-      safe<any[]>(s.from('players').select('id, region_id, home_club_id, plays_padel, plays_playa, is_dual')),
+      fetchAllRows(s, 'players', 'id, region_id, home_club_id, plays_padel, plays_playa, is_dual'),
       safe<any[]>(s.from('clubs').select('id, name, region_id')),
       safe<any[]>(s.from('teams').select('id, club_id, region_id')),
       safe<any[]>(s.from('regions').select('id, name, sort_order').order('sort_order')),
@@ -119,7 +137,7 @@ export async function getDashboard(): Promise<Dashboard> {
       safe<any[]>(s.from('v_dual_ranking').select('full_name, dual_score').order('position').limit(10)),
       safe<any[]>(s.from('v_player_ranking').select('full_name, points, sport').eq('sport','padel').order('points', { ascending: false }).limit(10)),
       safe<any[]>(s.from('v_player_ranking').select('full_name, points, sport').eq('sport','playa').order('points', { ascending: false }).limit(10)),
-      safe<any[]>(s.from('matches').select('id').eq('status','finalizado')),
+      fetchAllRows(s, 'matches', 'id', (q:any)=>q.eq('status','finalizado')),
     ])
     const teamPoints = new Map<string, number>()
     standings.forEach((r:any)=> teamPoints.set(r.team_id, Number(r.points)||0))
@@ -176,10 +194,10 @@ export async function getLeagueStats() {
   const s = await db()
   const [clubs, players, teams, matches, rubbers] = await Promise.all([
     safe<any[]>(s.from('clubs').select('id')),
-    safe<any[]>(s.from('players').select('id')),
+    fetchAllRows(s, 'players', 'id'),
     safe<any[]>(s.from('teams').select('id')),
-    safe<any[]>(s.from('matches').select('id').eq('status', 'finalizado')),
-    safe<any[]>(s.from('match_rubbers').select('id').not('home_won', 'is', null)),
+    fetchAllRows(s, 'matches', 'id', (q:any)=>q.eq('status','finalizado')),
+    fetchAllRows(s, 'match_rubbers', 'id', (q:any)=>q.not('home_won','is',null)),
   ])
   return {
     clubs: clubs.length, players: players.length, teams: teams.length,

@@ -31,8 +31,8 @@ export default async function ReclamaPage() {
       <div>
         <h1 className="text-3xl font-black text-noche">Reclama tu perfil</h1>
         <p className="mt-1 max-w-2xl text-slate-500">
-          Si tu correo ya está en el padrón del circuito, tu perfil y tu <b>nivel ya están calculados</b> en ArenaPadel Tour.
-          Reclámalo, elige tu zona y aparece en el ranking oficial.
+          Si ya estás en el padrón del circuito, tu perfil y tu <b>nivel ya están calculados</b> en ArenaPadel Tour.
+          Búscate por tu <b>nombre</b> (o por tu correo del torneo), elige tu zona y aparece en el ranking oficial.
         </p>
 
         <div className="mt-6">
@@ -40,7 +40,8 @@ export default async function ReclamaPage() {
             <div className="card p-6">
               <p className="font-semibold text-noche">Primero inicia sesión o regístrate</p>
               <p className="mt-1 text-sm text-slate-600">
-                Usa el <b>mismo correo</b> con el que te inscribiste en el torneo — así te reconocemos al instante.
+                Al entrar podrás <b>buscarte por tu nombre</b> y activar tu perfil. Si te inscribiste con tu correo,
+                úsalo al registrarte y te reconocemos al instante.
               </p>
               <Link href="/login" className="btn-primary mt-4 inline-block">Iniciar sesión / Registrarme</Link>
             </div>
@@ -68,7 +69,7 @@ export default async function ReclamaPage() {
         <div className="card p-5">
           <h3 className="font-bold">¿No te encontramos?</h3>
           <p className="mt-2 text-sm text-slate-600">
-            Asegúrate de usar el correo del torneo. Si aún no aparece, escríbenos por{' '}
+            Prueba escribiendo solo tu apellido, o tu apellido y nombre. Si aún no aparece, escríbenos por{' '}
             <Link href="/reclamos" className="text-pista underline">Reclamos</Link> y te ayudamos.
           </p>
         </div>
