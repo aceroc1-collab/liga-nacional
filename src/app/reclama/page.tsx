@@ -31,7 +31,7 @@ export default async function ReclamaPage() {
       <div>
         <h1 className="text-3xl font-black text-noche">Reclama tu perfil</h1>
         <p className="mt-1 max-w-2xl text-slate-500">
-          Si jugaste el <b>Padel Fest</b>, tu perfil y tu <b>nivel ya están calculados</b> en ArenaPadel Tour.
+          Si tu correo ya está en el padrón del circuito, tu perfil y tu <b>nivel ya están calculados</b> en ArenaPadel Tour.
           Reclámalo, elige tu zona y aparece en el ranking oficial.
         </p>
 
