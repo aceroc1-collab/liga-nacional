@@ -66,7 +66,7 @@ export default function ClaimProfileForm({ regions, sugerido }:
                   <input type="radio" name="player_id" value={it.id}
                     checked={selected === it.id} onChange={() => setSelected(it.id)} />
                   <span className="flex-1"><b className="text-noche">{it.full_name}</b>
-                    {it.tier ? <span className="text-slate-500"> · Nivel {it.tier}</span> : null}</span>
+                    {it.categoria ? <span className="text-slate-500"> · {it.categoria}</span> : null}</span>
                 </label>
               ))}
             </div>

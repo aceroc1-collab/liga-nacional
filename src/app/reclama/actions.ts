@@ -4,8 +4,17 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export type ClaimResult = { ok: boolean; message: string }
-export type ProfileHit = { id: string; full_name: string; tier: string | null }
+export type ProfileHit = { id: string; full_name: string; categoria: string | null }
 export type SearchResult = { ok: boolean; items: ProfileHit[]; message?: string }
+
+// Etiqueta de categoría padel a partir del rating (mismos umbrales que la app: min_rating)
+function categoriaPadel(rating: number | null): string | null {
+  if (rating == null) return null
+  if (rating >= 1800) return 'Grand Slam · 1ª Categoría'
+  if (rating >= 1650) return '1000 · 2ª y 3ª Categoría'
+  if (rating >= 1500) return '500 · 4ª y 5ª Categoría'
+  return 'Future · 6ª y 7ª Categoría'
+}
 
 // Búsqueda por nombre: devuelve perfiles SIN reclamar que coinciden con lo escrito.
 export async function searchProfiles(query: string): Promise<SearchResult> {
@@ -29,16 +38,16 @@ export async function searchProfiles(query: string): Promise<SearchResult> {
   if (error) return { ok: false, items: [], message: 'No se pudo buscar en este momento. Intenta de nuevo.' }
 
   const ids = (data || []).map((p: any) => p.id)
-  const levels: Record<string, string> = {}
+  const ratings: Record<string, number> = {}
   if (ids.length) {
     try {
       const { data: rs } = await s.from('player_ratings')
-        .select('player_id, category').eq('sport', 'padel').in('player_id', ids)
-      for (const r of rs || []) levels[r.player_id] = r.category
+        .select('player_id, rating').eq('sport', 'padel').in('player_id', ids)
+      for (const r of rs || []) ratings[r.player_id] = Number(r.rating)
     } catch {}
   }
   const items: ProfileHit[] = (data || []).map((p: any) => ({
-    id: p.id, full_name: p.full_name, tier: levels[p.id] ?? null,
+    id: p.id, full_name: p.full_name, categoria: categoriaPadel(ratings[p.id] ?? null),
   }))
   return { ok: true, items }
 }
