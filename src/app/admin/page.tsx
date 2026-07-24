@@ -4,7 +4,6 @@ import { getPlayers } from '@/lib/data'
 import AdminNav from '@/components/AdminNav'
 import PhotoUploader from './PhotoUploader'
 import { InscriptionsTable, MatchesTable } from './AdminTables'
-import RatingsRecompute from './RatingsRecompute'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Panel Admin' }
@@ -54,7 +53,6 @@ export default async function AdminPage() {
         <InscriptionsTable rows={insc.data ?? []} />
         <MatchesTable rows={(matches.data ?? []) as any[]} />
         <PhotoUploader players={players} />
-        <RatingsRecompute />
       </div>
     </div>
   )

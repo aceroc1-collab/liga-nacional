@@ -25,10 +25,7 @@ export interface Sponsor {
 }
 export interface PlayerRankingRow {
   player_id: string; full_name: string; slug: string | null; gender: Gender; photo_url: string | null;
-  region_id: string | null; sport: Sport;
-  category_id: string | null; category_name: string | null; level_label: string | null;
-  team_name: string | null;
-  points: number; matches_played: number; hidden_rating?: number; position: number;
+  region_id: string | null; sport: Sport; points: number; matches_played: number; position: number;
 }
 export interface DualRankingRow {
   player_id: string; full_name: string; slug: string | null; photo_url: string | null; region_id: string | null;
@@ -37,28 +34,4 @@ export interface DualRankingRow {
 export interface TeamStandingRow {
   team_id: string; name: string; slug: string | null; logo_url: string | null; sport: Sport;
   category_id: string; region_id: string; points: number; wins: number; losses: number; played: number; position: number;
-}
-
-// --- Motor de ranking híbrido (Capa B, Glicko-2) ---
-export interface PlayerRatingRow {
-  player_id: string; sport: Sport; rating: number; rd: number; vol: number;
-  matches: number; category: 'A' | 'B' | 'C' | 'D' | null; updated_at: string;
-}
-
-// --- v2: Nivel publico, reclasificaciones y reclamos ---
-export interface RankingPulse {
-  sport: Sport; full_name: string; rating: number; delta: number; updated_at: string;
-}
-export interface ReclasificacionRow {
-  player_id: string; full_name: string; slug: string | null; photo_url: string | null;
-  region_id: string | null; sport: Sport; rating: number; matches_played: number;
-  categoria_actual: string | null; categoria_sugerida: string | null;
-  movimiento: 'sube' | 'baja' | 'se_mantiene' | 'sin_datos';
-}
-export interface Claim {
-  id: string; tipo: string; sport: Sport | null; reported_name: string | null;
-  club_name: string | null; description: string; contact_name: string;
-  contact_email: string | null; contact_phone: string | null;
-  status: 'pendiente' | 'en_revision' | 'resuelto' | 'rechazado';
-  admin_notes: string | null; created_at: string; resolved_at: string | null;
 }

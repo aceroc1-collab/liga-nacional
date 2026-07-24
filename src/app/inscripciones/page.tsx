@@ -1,6 +1,7 @@
 import { getRegions, getCategories, getClubs } from '@/lib/data'
 import { createClient } from '@/lib/supabase/server'
 import InscriptionForm from './InscriptionForm'
+import { PRICES } from '@/lib/config'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Inscripciones' }
@@ -30,6 +31,23 @@ export default async function InscripcionesPage() {
         </div>
       </div>
       <aside className="space-y-4">
+        <div className="card overflow-hidden">
+          <div className="bg-noche p-4 text-white"><h3 className="font-bold">Costo de inscripción</h3>
+            <p className="text-xs text-white/60">Por equipo, por temporada</p></div>
+          <div className="divide-y divide-slate-100">
+            <div className="flex items-center justify-between p-4">
+              <span className="font-semibold">🎾 Pádel</span>
+              <span className="text-xl font-black text-noche">{PRICES.symbol}{PRICES.padel} <span className="text-xs text-slate-400">{PRICES.currency}</span></span>
+            </div>
+            <div className="flex items-center justify-between p-4">
+              <span className="font-semibold">🏖️ Tenis Playa</span>
+              <span className="text-xl font-black text-noche">{PRICES.symbol}{PRICES.playa} <span className="text-xs text-slate-400">{PRICES.currency}</span></span>
+            </div>
+          </div>
+          <p className="border-t border-slate-100 bg-slate-50 p-3 text-xs text-slate-500">
+            Cada deporte se inscribe por separado. Si compites en ambos, pagas las dos inscripciones (sin descuento dual).
+          </p>
+        </div>
         <div className="card p-5">
           <h3 className="font-bold">¿Cómo funciona?</h3>
           <ol className="mt-3 space-y-2 text-sm text-slate-600">
@@ -42,8 +60,8 @@ export default async function InscripcionesPage() {
         <div className="card p-5">
           <h3 className="font-bold">Atleta Dual</h3>
           <p className="mt-2 text-sm text-slate-600">
-            Si compites en pádel y tenis playa, marca la casilla “Atleta Dual” en el
-            formulario y obtienes <b>10% de descuento</b> en tu inscripción.
+            Marca “Pádel” y “Playa” en tus jugadores que compiten en ambos: entran al
+            ranking Atleta Dual con bonus especial.
           </p>
         </div>
       </aside>

@@ -7,7 +7,6 @@ const links = [
   { href: '/admin/equipos', label: 'Equipos' },
   { href: '/admin/partidos', label: 'Partidos' },
   { href: '/admin/patrocinios', label: 'Patrocinios' },
-  { href: '/admin/reclamos', label: 'Reclamos' },
   { href: '/admin/usuarios', label: 'Administradores' },
 ]
 
