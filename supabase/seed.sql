@@ -21,30 +21,43 @@ on conflict (slug) do nothing;
 
 -- Categorías PÁDEL
 insert into categories (sport, name, level_label, gender, sort_order) values
- ('padel','Grand Slam','Pro / Avanzado','M',1),
- ('padel','Grand Slam','Pro / Avanzado','F',1),
- ('padel','1000','Medio-Alto','M',2),
- ('padel','1000','Medio-Alto','F',2),
- ('padel','500','Intermedio','M',3),
- ('padel','500','Intermedio','F',3),
- ('padel','Future','Iniciación','M',4),
- ('padel','Future','Iniciación','F',4),
- ('padel','Seniors','Veteranos','M',5),
- ('padel','Seniors','Veteranos','F',5),
- ('padel','Mixto','Todos los niveles','Mixto',6)
+ ('padel','Grand Slam','1ª Categoría','M',1),
+ ('padel','Grand Slam','1ª Categoría','F',1),
+ ('padel','1000','2ª y 3ª Categoría','M',2),
+ ('padel','1000','2ª y 3ª Categoría','F',2),
+ ('padel','500','4ª y 5ª Categoría','M',4),
+ ('padel','500','4ª y 5ª Categoría','F',4),
+ ('padel','Future','6ª y 7ª Categoría','M',6),
+ ('padel','Future','6ª y 7ª Categoría','F',6),
+ ('padel','Seniors +50','+50 años','M',8),
+ ('padel','Seniors +50','+50 años','F',8),
+ ('padel','Sub-12','Juvenil','M',9),
+ ('padel','Sub-12','Juvenil','F',9),
+ ('padel','Sub-14','Juvenil','M',10),
+ ('padel','Sub-14','Juvenil','F',10),
+ ('padel','Sub-16','Juvenil','M',11),
+ ('padel','Sub-16','Juvenil','F',11)
 on conflict do nothing;
 
 -- Categorías TENIS PLAYA (modelo FITP: Series)
 insert into categories (sport, name, level_label, gender, sort_order) values
- ('playa','Serie A','Élite / avanzado','M',1),
- ('playa','Serie A','Élite / avanzado','F',1),
- ('playa','Serie B','Intermedio','M',2),
- ('playa','Serie B','Intermedio','F',2),
- ('playa','Serie C','Iniciación','M',3),
- ('playa','Serie C','Iniciación','F',3),
- ('playa','Juvenil','Sub-12/14/16/18','M',4),
- ('playa','Seniors','Veteranos','M',5),
- ('playa','Mixto','Dobles mixto','Mixto',6)
+ ('playa','Fun','Principiante','M',1),
+ ('playa','Fun','Principiante','F',1),
+ ('playa','Amateur','Amateur','M',2),
+ ('playa','Amateur','Amateur','F',2),
+ ('playa','Intermedio / Avanzado','Intermedio / Avanzado','M',3),
+ ('playa','Intermedio / Avanzado','Intermedio / Avanzado','F',3),
+ ('playa','Sub-12','Juvenil','M',4),
+ ('playa','Sub-12','Juvenil','F',4),
+ ('playa','Sub-14','Juvenil','M',5),
+ ('playa','Sub-14','Juvenil','F',5),
+ ('playa','Sub-16','Juvenil','M',6),
+ ('playa','Sub-16','Juvenil','F',6),
+ ('playa','Sub-18','Juvenil','M',7),
+ ('playa','Sub-18','Juvenil','F',7),
+ ('playa','Master +45','+45 años','M',8),
+ ('playa','Master +45','+45 años','F',8),
+ ('playa','Mixto','Dobles mixto','Mixto',9)
 on conflict do nothing;
 
 -- Clubes demo
@@ -79,7 +92,7 @@ on conflict (id) do nothing;
 insert into teams (id, season_id, club_id, region_id, sport, category_id, name, captain_player_id) values
  ('e0000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000001','c0000000-0000-0000-0000-000000000001',(select id from regions where slug='capital'),'padel',(select id from categories where sport='padel' and name='Grand Slam' and gender='M'),'Caracas GS','a0000000-0000-0000-0000-000000000001'),
  ('e0000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-000000000001','c0000000-0000-0000-0000-000000000003',(select id from regions where slug='central'),'padel',(select id from categories where sport='padel' and name='Grand Slam' and gender='M'),'Valencia GS','a0000000-0000-0000-0000-000000000003'),
- ('e0000000-0000-0000-0000-000000000003','00000000-0000-0000-0000-000000000001','c0000000-0000-0000-0000-000000000004',(select id from regions where slug='occidente'),'playa',(select id from categories where sport='playa' and name='Serie A' and gender='M'),'Zulia Arena A','a0000000-0000-0000-0000-000000000005')
+ ('e0000000-0000-0000-0000-000000000003','00000000-0000-0000-0000-000000000001','c0000000-0000-0000-0000-000000000004',(select id from regions where slug='occidente'),'playa',(select id from categories where sport='playa' and name='Intermedio / Avanzado' and gender='M'),'Zulia Arena A','a0000000-0000-0000-0000-000000000005')
 on conflict (id) do nothing;
 
 -- Rosters

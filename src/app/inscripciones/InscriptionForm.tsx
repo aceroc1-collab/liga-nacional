@@ -1,18 +1,24 @@
 'use client'
 import { useState } from 'react'
+import Script from 'next/script'
 import { submitInscription, type InscriptionResult } from './actions'
 import type { Region, Category, Club } from '@/lib/types'
-import { SPORTS, PRICES } from '@/lib/config'
+import { SPORTS, FEES, inscriptionAmount } from '@/lib/config'
 
 export default function InscriptionForm({
   regions, categories, clubs, seasonId,
 }: { regions: Region[]; categories: Category[]; clubs: Club[]; seasonId: string | null }) {
   const [sport, setSport] = useState<'padel' | 'playa'>('padel')
+  const [dual, setDual] = useState(false)
   const [rows, setRows] = useState([0, 1, 2, 3])
   const [result, setResult] = useState<InscriptionResult | null>(null)
   const [loading, setLoading] = useState(false)
+  const captchaSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
   const cats = categories.filter(c => c.sport === sport)
+  const base = FEES[sport]
+  const total = inscriptionAmount(sport, dual)
+  const money = (n: number) => `${FEES.symbol}${n.toFixed(2)}`
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -20,12 +26,14 @@ export default function InscriptionForm({
     const fd = new FormData(e.currentTarget)
     const r = await submitInscription(fd)
     setResult(r); setLoading(false)
-    if (r.ok) e.currentTarget.reset()
+    if (r.ok) { e.currentTarget.reset(); setDual(false) }
+    try { (window as any).turnstile?.reset() } catch {}
   }
 
   return (
     <form onSubmit={onSubmit} className="card space-y-6 p-6">
       <input type="hidden" name="season_id" value={seasonId ?? ''} />
+      <input type="hidden" name="dual" value={dual ? '1' : '0'} />
 
       {/* Deporte */}
       <div>
@@ -35,10 +43,7 @@ export default function InscriptionForm({
             <label key={k} className={`flex-1 cursor-pointer rounded-xl border-2 p-3 text-center font-semibold ${sport===k?'border-noche bg-noche/5':'border-slate-200'}`}>
               <input type="radio" name="sport" value={k} className="hidden"
                 checked={sport===k} onChange={() => setSport(k)} />
-              {SPORTS[k].icon} {SPORTS[k].label}
-              <span className="mt-0.5 block text-xs font-bold" style={{ color: SPORTS[k].color }}>
-                {PRICES.symbol}{PRICES[k]} {PRICES.currency}
-              </span>
+              {SPORTS[k].icon} {SPORTS[k].label} · {FEES.symbol}{FEES[k]}
             </label>
           ))}
         </div>
@@ -99,10 +104,24 @@ export default function InscriptionForm({
       </div>
       <div><label className="label">Notas</label><textarea name="notes" className="input" rows={2} /></div>
 
-      {/* Costo de inscripción */}
-      <div className="flex items-center justify-between rounded-xl bg-noche px-4 py-3 text-white">
-        <span className="text-sm font-medium text-white/80">Costo de inscripción · {SPORTS[sport].label}</span>
-        <span className="text-2xl font-black">{PRICES.symbol}{PRICES[sport]} <span className="text-sm font-semibold text-white/60">{PRICES.currency}</span></span>
+      {/* Resumen de pago */}
+      <div className="rounded-xl border border-slate-200 p-4">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input type="checkbox" className="mt-1" checked={dual} onChange={e => setDual(e.target.checked)} />
+          <span>
+            <span className="font-semibold text-noche">También compito en la otra disciplina (Atleta Dual)</span>
+            <span className="block text-xs text-slate-500">Cada deporte se inscribe y se paga por separado (sin descuento por jugar ambos).</span>
+          </span>
+        </label>
+        <div className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-sm">
+          <div className="flex justify-between text-slate-600">
+            <span>Inscripción {SPORTS[sport].label}</span><span>{money(base)}</span>
+          </div>
+          <div className="flex justify-between pt-1 text-base font-black text-noche">
+            <span>Total a pagar</span><span>{money(total)}</span>
+          </div>
+          <p className="pt-1 text-xs text-slate-400">Pago por pago móvil / transferencia. El coordinador confirma tu inscripción.</p>
+        </div>
       </div>
 
       {result && (
@@ -110,8 +129,16 @@ export default function InscriptionForm({
           {result.message}
         </div>
       )}
+      {captchaSiteKey && (
+        <div>
+          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer strategy="afterInteractive" />
+          <div className="cf-turnstile" data-sitekey={captchaSiteKey} data-language="es" />
+          <p className="mt-1 text-xs text-slate-400">Verificación de seguridad para evitar registros automáticos.</p>
+        </div>
+      )}
+
       <button disabled={loading} className="btn-primary w-full">
-        {loading ? 'Enviando…' : 'Enviar solicitud de inscripción'}
+        {loading ? 'Enviando…' : `Enviar solicitud · ${money(total)}`}
       </button>
     </form>
   )

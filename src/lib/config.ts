@@ -21,10 +21,20 @@ export const SPORTS = {
 
 export type SportKey = keyof typeof SPORTS
 
-// Precios de inscripción por deporte (sin descuento por atleta dual)
-export const PRICES = {
+// ============================================================
+//  PRECIOS DE INSCRIPCIÓN (USD) — sin descuento por atleta dual
+// ============================================================
+export const FEES = {
   currency: 'USD',
   symbol: '$',
   padel: 80,
   playa: 75,
+  dualDiscount: 0, // sin descuento por atleta dual
 } as const
+
+/** Monto de inscripción según deporte y si es dual (−10%). */
+export function inscriptionAmount(sport: 'padel' | 'playa', dual: boolean): number {
+  const base = FEES[sport]
+  const amount = dual ? base * (1 - FEES.dualDiscount) : base
+  return Math.round(amount * 100) / 100
+}
